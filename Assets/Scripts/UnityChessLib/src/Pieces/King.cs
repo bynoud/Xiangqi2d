@@ -1,0 +1,112 @@
+﻿using System.Collections.Generic;
+
+namespace UnityXiangqi
+{
+	public class King : Piece<King> {
+		private static readonly int[] rookFiles = { 1, 8 };
+		
+		public King() : base(Side.None) {}
+		public King(Side owner) : base(owner) {}
+
+		public override string ToText() => Owner==Side.White ? "K" : "k";
+
+		protected override IEnumerable<Movement> EnumeratePossibleMoves (
+			Board board,
+			Square position
+		) {
+			foreach (Square offset in SquareUtil.CardinalOffsets) {
+				Movement testMove = new Movement(position, position + offset);
+
+				if (inPalace(testMove.End)) {
+					yield return testMove;
+				}
+			}
+
+			// CheckSurroundingSquares(board, position, ref result);
+
+			// if (Owner == Side.White) {
+			// 	CheckCastlingMoves(
+			// 		board,
+			// 		position,
+			// 		gameConditions.WhiteCanCastleKingside,
+			// 		gameConditions.WhiteCanCastleQueenside,
+			// 		ref result
+			// 	);
+			// } else {
+			// 	CheckCastlingMoves(
+			// 		board,
+			// 		position,
+			// 		gameConditions.BlackCanCastleKingside,
+			// 		gameConditions.BlackCanCastleQueenside,
+			// 		ref result
+			// 	);
+			// }
+
+			// return result;
+		}
+
+		//private void CheckSurroundingSquares(
+		//	Board board,
+		//	Square position,
+		//	ref Dictionary<(Square, Square), Movement> movesByStartEndSquare
+		//) {
+		//	foreach (Square offset in SquareUtil.SurroundingOffsets) {
+		//		Movement testMove = new Movement(position, position + offset);
+
+		//		if (inPalace(testMove.End) && Rules.MoveObeysRules(board, testMove, Owner)) {
+		//			if (movesByStartEndSquare == null) {
+		//				movesByStartEndSquare = new Dictionary<(Square, Square), Movement>();
+		//			}
+		//			movesByStartEndSquare[(testMove.Start, testMove.End)] = new Movement(testMove);
+		//		}
+		//	}
+		//}
+
+		//private void CheckCastlingMoves(
+		//	Board board,
+		//	Square position,
+		//	bool canCastleKingSide,
+		//	bool canCastleQueenside,
+		//	ref Dictionary<(Square, Square), Movement> movesByStartEndSquare
+		//) {
+		//	if (Rules.IsPlayerInCheck(board, Owner)
+		//		|| !canCastleKingSide && !canCastleQueenside
+		//	) { return; }
+
+		//	int castlingRank = Owner.CastlingRank();
+			
+		//	foreach (int rookFile in rookFiles) {
+		//		bool checkingQueenside = rookFile == 1;
+
+		//		Square rookSquare = new Square(rookFile, castlingRank);
+		//		if (board[rookSquare] is not Rook rook
+		//		    || rook.Owner != Owner
+		//		    || checkingQueenside && !canCastleQueenside
+		//		    || !checkingQueenside && !canCastleKingSide
+		//		) {
+		//			continue;
+		//		}
+				
+		//		Square inBetweenSquare0 = new Square(checkingQueenside ? 4 : 6, castlingRank);
+		//		Square inBetweenSquare1 = new Square(checkingQueenside ? 3 : 7, castlingRank);
+		//		Square inBetweenSquare2 = new Square(2, castlingRank);
+		//		Movement castlingMove = new CastlingMove(position, inBetweenSquare1, rookSquare);
+				
+		//		if (!board.IsOccupiedAt(inBetweenSquare0)
+		//		    && !board.IsOccupiedAt(inBetweenSquare1)
+		//		    && (!board.IsOccupiedAt(inBetweenSquare2) || !checkingQueenside)
+		//		    && !Rules.IsSquareAttacked(inBetweenSquare0, board, Owner)
+		//		    && !Rules.IsSquareAttacked(inBetweenSquare1, board, Owner)
+		//		    && Rules.MoveObeysRules(board, castlingMove, Owner)
+		//		) {
+		//			if (movesByStartEndSquare == null) {
+		//				movesByStartEndSquare = new Dictionary<(Square, Square), Movement>();
+		//			}
+
+		//			movesByStartEndSquare[(position, inBetweenSquare1)]
+		//				= new CastlingMove(position, inBetweenSquare1, rookSquare);
+		//		}
+		//	}
+		//}
+	}
+}
