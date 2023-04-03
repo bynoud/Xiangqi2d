@@ -240,6 +240,9 @@ public class BoardManager : MonoBehaviourSingleton<BoardManager>
         GameObject square = GetSquareGOByPosition(position);
         return square.transform.childCount == 0 ? null : square.transform.GetChild(0).gameObject;
     }
+    public VisualPiece GetVisualPieceAtPosition(Square position) {
+        return positionMap[position].GetComponentInChildren<VisualPiece>();
+    }
 
     public void HighlightSquares(Square sekectedSquare, ICollection<Movement> moves)
     {

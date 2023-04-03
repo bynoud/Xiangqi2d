@@ -1,6 +1,8 @@
 *.csproj
 *.sln
+*.vsidx
 Temp
+Build
 Library
 Logs
 obj

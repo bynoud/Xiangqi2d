@@ -9,8 +9,8 @@ namespace UnityXiangqi.Engine
 
         void ShutDown();
 
-        Task SetupNewGame(Game game);
+        void SetupNewGame(Game game);
 
-        Task<Movement> GetBestMove(int timeoutMS);
+        Movement GetBestMove(int timeoutMS);
     }
 }

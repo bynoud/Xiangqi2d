@@ -1,5 +1,9 @@
+
+#if UNITY_STANDALONE_WIN
+
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Timers;
 using UnityEngine;
@@ -10,7 +14,7 @@ namespace UnityXiangqi.Engine
     public class MockUCIEngine : IUCIEngine
     {
         private Process engineProcess;
-        private string exePath = Application.streamingAssetsPath + "/UCIEngines/pigeon-1.5.1/pigeon-1.5.1.exe";
+        private string exePath = Application.streamingAssetsPath + "/UCIEngines/fairy-stockfish_x86-64-bmi2.exe";
         private bool isReady;
         private Timer timer;
         private float timeMS;
@@ -46,6 +50,9 @@ namespace UnityXiangqi.Engine
             {
                 Debug.Log(engineOutputLine);
             }
+
+            await Send("setoption name UCI_Variant value xiangqi");
+            await Send("setoption name UCI_Elo value 2850");
 
             await Send("isready");
             await foreach (string engineOutputLine in Receive("readyok"))
@@ -112,36 +119,45 @@ namespace UnityXiangqi.Engine
 
         private static Movement ParseUCIMove(string uciMove, Side sideToMove)
         {
-            Movement result;
-            if (uciMove.Length > 4)
-            {
-                result = new PromotionMove(
-                    new Square(uciMove[..2]),
-                    new Square(uciMove[2..4])
-                );
-
-                ElectedPiece electedPiece = uciMove[4..5].ToLower() switch
-                {
-                    "b" => ElectedPiece.Bishop,
-                    "n" => ElectedPiece.Knight,
-                    "q" => ElectedPiece.Queen,
-                    "r" => ElectedPiece.Rook,
-                    _ => ElectedPiece.None
-                };
-
-                ((PromotionMove)result).SetPromotionPiece(
-                    PromotionUtil.GeneratePromotionPiece(electedPiece, sideToMove)
-                );
+            Debug.Log($"Parse move {uciMove}");
+            Match m = Regex.Match(uciMove, @"(\w\d+)(\w\d+)");
+            if (!m.Success) {
+                Debug.Log($"Error when parse move {uciMove}");
+                return null;
             }
-            else
-            {
-                result = new Movement(
-                    new Square(uciMove[..2]),
-                    new Square(uciMove[2..4])
-                );
-            }
+            Debug.Log($" -> {m.Groups[1].Value} {m.Groups[2].Value}");
+            return new Movement(new Square(m.Groups[1].Value), new Square(m.Groups[2].Value));
 
-            return result;
+            //Movement result;
+            //if (uciMove.Length > 4)
+            //{
+            //    result = new PromotionMove(
+            //        new Square(uciMove[..2]),
+            //        new Square(uciMove[2..4])
+            //    );
+
+            //    ElectedPiece electedPiece = uciMove[4..5].ToLower() switch
+            //    {
+            //        "b" => ElectedPiece.Bishop,
+            //        "n" => ElectedPiece.Knight,
+            //        "q" => ElectedPiece.Queen,
+            //        "r" => ElectedPiece.Rook,
+            //        _ => ElectedPiece.None
+            //    };
+
+            //    ((PromotionMove)result).SetPromotionPiece(
+            //        PromotionUtil.GeneratePromotionPiece(electedPiece, sideToMove)
+            //    );
+            //}
+            //else
+            //{
+            //    result = new Movement(
+            //        new Square(uciMove[..2]),
+            //        new Square(uciMove[2..4])
+            //    );
+            //}
+
+            //return result;
         }
 
         private async Task Send(string data)
@@ -168,3 +184,5 @@ namespace UnityXiangqi.Engine
         }
     }
 }
+
+#endif

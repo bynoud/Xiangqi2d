@@ -109,7 +109,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 #if AI_TEST
 	public async void StartNewGame(bool isWhiteAI = true, bool isBlackAI = true) {
 #else
-    public async void StartNewGame(bool isWhiteAI = false, bool isBlackAI = false)
+    public async void StartNewGame(bool isWhiteAI = false, bool isBlackAI = true /* FIXME false*/)
     {
 #endif
         game = new Game();
@@ -121,11 +121,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             if (uciEngine == null)
             {
+#if UNITY_ANDROID
+                uciEngine = new AndroidUCIEngine();
+#elif UNITY_STANDALONE_WIN
                 uciEngine = new MockUCIEngine();
+#else
+                Debug.Log("Unsupported platform");
+#endif
                 uciEngine.Start();
             }
 
-            await uciEngine.SetupNewGame(game);
+            uciEngine.SetupNewGame(game);
             NewGameStartedEvent?.Invoke();
 
             //if (isWhiteAI)
@@ -317,7 +323,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 //        }
 //    }
 
-    private void OnPieceMoved(/*Square movedPieceInitialSquare, Transform movedPieceTransform*/VisualPiece movedPiece, Transform closestBoardSquareTransform) {
+    private async void OnPieceMoved(/*Square movedPieceInitialSquare, Transform movedPieceTransform*/VisualPiece movedPiece, Transform closestBoardSquareTransform) {
         Square movedPieceInitialSquare = movedPiece.CurrentSquare;
         Square endSquare = new Square(closestBoardSquareTransform.name);
 
@@ -353,29 +359,27 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             //movedPiece.transform.position = closestBoardSquareTransform.position;
         }
 
-        //bool gameIsOver = game.HalfMoveTimeline.TryGetCurrent(out HalfMove lastHalfMove)
-        //                  && lastHalfMove.CausedStalemate || lastHalfMove.CausedCheckmate;
-        //if (!gameIsOver
-        //    && (SideToMove == Side.White && isWhiteAI
-        //        || SideToMove == Side.Black && isBlackAI)
-        //) {
-        //    Movement bestMove = await uciEngine.GetBestMove(10_000);
-        //    DoAIMove(bestMove);
-        //}
+        bool gameIsOver = game.HalfMoveTimeline.TryGetCurrent(out HalfMove lastHalfMove)
+                          && lastHalfMove.CausedStalemate || lastHalfMove.CausedCheckmate;
+        if (!gameIsOver
+            && (SideToMove == Side.White && isWhiteAI
+                || SideToMove == Side.Black && isBlackAI)
+        ) {
+            Movement bestMove = uciEngine.GetBestMove(1000);
+            DoAIMove(bestMove);
+        }
     }
 
 
-    //private void DoAIMove(Movement move)
-    //{
-    //    GameObject movedPiece = BoardManager.Instance.GetPieceGOAtPosition(move.Start);
-    //    GameObject endSquareGO = BoardManager.Instance.GetSquareGOByPosition(move.End);
-    //    OnPieceMoved(
-    //        move.Start,
-    //        movedPiece.transform,
-    //        endSquareGO.transform,
-    //        (move as PromotionMove)?.PromotionPiece
-    //    );
-    //}
+    private void DoAIMove(Movement move) {
+        //GameObject movedPiece = BoardManager.Instance.GetPieceGOAtPosition(move.Start);
+        VisualPiece movedPiece = BoardManager.Instance.GetVisualPieceAtPosition(move.Start);
+        GameObject endSquareGO = BoardManager.Instance.GetSquareGOByPosition(move.End);
+        OnPieceMoved(
+            movedPiece,
+            endSquareGO.transform
+        );
+    }
 
     //public bool HasLegalMoves(Piece piece) {
     //	return game.TryGetLegalMovesForPiece(piece, out _);
